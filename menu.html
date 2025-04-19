@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>🎰 Casino Games</title>
+  <title>Fake Casino - Menu</title>
   <style>
     body {
       background-color: #1e1e1e;
@@ -11,28 +11,35 @@
       text-align: center;
       padding: 20px;
     }
-    .btn {
-      padding: 15px 25px;
-      margin: 10px;
-      font-size: 18px;
+    .btn-green {
       background-color: #3e8e41;
       color: white;
       border: none;
       cursor: pointer;
-      text-decoration: none;
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
     }
-    .btn:hover {
-      background-color: #2c6b33;
+    .btn-green:hover {
+      background-color: #2c7d35;
+    }
+    h1 {
+      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
-  <h1>🎰 Welcome to the Casino!</h1>
-  <h3>💰 Balance: <span id="balanceDisplay">$0.00</span></h3>
-  <p>Select a game to play:</p>
-  <a href="blackjack.html" class="btn">Blackjack</a>
-  <a href="crash.html" class="btn">Crash Game</a>
-  <a href="mines.html" class="btn">Mines Game</a>
+  <h1>Welcome to the Fake Casino! 🎰</h1>
+  <h3>Select a Game to Play:</h3>
+  
+  <!-- Game Links -->
+  <button class="btn-green" onclick="location.href='blackjack.html'">▶ Blackjack</button>
+  <button class="btn-green" onclick="location.href='mines.html'">▶ Mines Game</button>
+  <button class="btn-green" onclick="location.href='crash.html'">▶ Crash Game</button>
+  
+  <!-- Add more games as needed -->
+  
+  <p>💰 Balance: <span id="balanceDisplay">$0.00</span></p>
 
   <script>
     // Shared balance via localStorage
@@ -46,7 +53,7 @@
       document.getElementById("balanceDisplay").innerText = `$${balance.toFixed(2)}`;
     }
 
-    window.onload = updateBalanceDisplay;
+    updateBalanceDisplay();  // Update balance on page load
   </script>
 </body>
 </html>
