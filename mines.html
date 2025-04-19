@@ -1,1 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>💣 Mines Game</title>
+  <style>
+    body {
+      background-color: #1e1e1e;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 50px);
+      grid-gap: 5px;
+      justify-content: center;
+    }
+    .cell {
+      width: 50px;
+      height: 50px;
+      background-color: #2c3e50;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+    .cell.revealed {
+      background-color: #34495e;
+    }
+    .cell.mine {
+      background-color: #e84118;
+    }
+    .cell.safe {
+      background-color: #44bd32;
+    }
+    .btn-green {
+      background-color: #3e8e41;
+      color: white;
+      border: none;
+      cursor: pointer;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>💣 Mines Game</h1>
+  <h3>💰 Balance: <span id="balanceDisplay">$0.00</span></h3>
+  <h4>Pick a bet amount, and click to uncover tiles. Avoid the bombs!</h4>
+  <input type="number" id="bet" placeholder="Enter Bet Amount" />
+  <br>
+  <button class="btn-green" onclick="startGame()">▶ Start Game</button>
 
+  <p id="status"></p>
+  <div class="grid" id="grid"></div>
+
+  <script>
+    // Shared balance via localStorage
+    let balance;
+    if (localStorage.getItem("balance") === null) {
+      localStorage.setItem("balance", "1000");
+    }
+    balance = parseFloat(localStorage.getItem("balance"));
+
+    function updateBalanceDisplay() {
+      document.getElementById("balanceDisplay").innerText = `$${balance.toFixed(2)}`;
+    }
+
+    function updateBalance(amount) {
+      balance += amount;
+      localStorage.setItem("balance", balance.toString());
+      updateBalanceDisplay();
+    }
+
+    // Mines Game Logic
+    let betAmount = 0;
+    let gridSize = 5; // 5x5 grid
+    let mines = [];
+    let revealedCells = [];
+    let gameOver = false;
+    let multiplier = 1;
+    let safeCells = [];
+
+    function startGame() {
+      if (gameOver) return;
+      betAmount = parseFloat(document.getElementById("bet").value);
+      if (isNaN(betAmount) || betAmount <= 0) {
+        document.getElementById("status").innerText = "⚠️ Enter a valid bet amount!";
+        return;
+      }
+      if (betAmount > balance) {
+        document.getElementById("status").innerText = "❌ Not enough money!";
+        return;
+      }
+
+      updateBalance(-betAmount);
+      mines = generateMines();
+      revealedCells = [];
+      safeCells = [];
+      multiplier = 1;
+      gameOver = false;
+      document.getElementById("status").innerText = "🚀 Game started! Avoid the bombs!";
+      generateGrid();
+    }
+
+    function generateMines() {
+      let minesArray = [];
+      while (minesArray.length < 3) { // 3 mines for this example
+        let randomCell = Math.floor(Math.random() * (gridSize * gridSize));
+        if (!minesArray.includes(randomCell)) {
+          minesArray.push(randomCell);
+        }
+      }
+      return minesArray;
+    }
+
+    function generateGrid() {
+      let gridHTML = '';
+      for (let i = 0; i < gridSize * gridSize; i++) {
+        gridHTML += `<div class="cell" onclick="revealCell(${i})"></div>`;
+      }
+      document.getElementById("grid").innerHTML = gridHTML;
+    }
+
+    function revealCell(cellIndex) {
+      if (gameOver || revealedCells.includes(cellIndex)) return;
+
+      revealedCells.push(cellIndex);
+      let cell = document.getElementsByClassName("cell")[cellIndex];
+
+      if (mines.includes(cellIndex)) {
+        cell.classList.add("mine");
+        document.getElementById("status").innerText = "💥 BOOM! You hit a bomb! Game Over!";
+        gameOver = true;
+        updateBalance(-betAmount);
+      } else {
+        cell.classList.add("revealed", "safe");
+        safeCells.push(cellIndex);
+        multiplier += 0.1;  // Increase multiplier with each safe click (10% per safe cell)
+        document.getElementById("status").innerText = `🚀 Multiplier: x${multiplier.toFixed(2)}! Keep going!`;
+
+        if (revealedCells.length === (gridSize * gridSize - mines.length)) { // No more mines
+          document.getElementById("status").innerText = `🎉 You cleared the grid! You win! Your multiplier is x${multiplier.toFixed(2)}`;
+          updateBalance(betAmount * multiplier); // Apply multiplier to the bet
+        }
+      }
+    }
+
+    window.onload = updateBalanceDisplay;
+  </script>
+</body>
+</html>
