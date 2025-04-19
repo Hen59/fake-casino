@@ -1,44 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>🎰 Casino Menu</title>
+  <meta charset="UTF-8" />
+  <title>🎰 Casino Games</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #111;
+      background-color: #1e1e1e;
       color: #fff;
+      font-family: Arial, sans-serif;
       text-align: center;
-      padding: 40px;
+      padding: 20px;
     }
-    iframe {
-      width: 100%;
-      height: 600px;
-      border: none;
-      margin-top: 20px;
-    }
-    button {
-      padding: 10px 20px;
+    .btn {
+      padding: 15px 25px;
       margin: 10px;
-      font-size: 16px;
-      cursor: pointer;
+      font-size: 18px;
       background-color: #3e8e41;
       color: white;
       border: none;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn:hover {
+      background-color: #2c6b33;
     }
   </style>
 </head>
 <body>
-  <h1>🎲 Welcome to Henry's Casino</h1>
-  <div>
-    <button onclick="loadGame('crash.html')">Play Crash</button>
-    <button onclick="loadGame('blackjack.html')">Play Blackjack</button>
-  </div>
-  <iframe id="gameFrame" src=""></iframe>
+  <h1>🎰 Welcome to the Casino!</h1>
+  <h3>💰 Balance: <span id="balanceDisplay">$0.00</span></h3>
+  <p>Select a game to play:</p>
+  <a href="blackjack.html" class="btn">Blackjack</a>
+  <a href="crash.html" class="btn">Crash Game</a>
+  <a href="mines.html" class="btn">Mines Game</a>
 
   <script>
-    function loadGame(game) {
-      document.getElementById("gameFrame").src = game;
+    // Shared balance via localStorage
+    let balance;
+    if (localStorage.getItem("balance") === null) {
+      localStorage.setItem("balance", "1000");
     }
+    balance = parseFloat(localStorage.getItem("balance"));
+
+    function updateBalanceDisplay() {
+      document.getElementById("balanceDisplay").innerText = `$${balance.toFixed(2)}`;
+    }
+
+    window.onload = updateBalanceDisplay;
   </script>
 </body>
 </html>
