@@ -2,136 +2,126 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>💥 Crash Game</title>
   <style>
     body {
-      font-family: 'Helvetica', sans-serif;
       background-color: #1e1e1e;
-      color: white;
+      color: #fff;
+      font-family: Arial, sans-serif;
       text-align: center;
       padding: 20px;
     }
-    .multiplier {
-      font-size: 2em;
-      color: #44bd32;
-      margin: 20px 0;
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 16px;
     }
-    .btn {
+    .btn-green {
       background-color: #3e8e41;
       color: white;
       border: none;
-      padding: 10px 20px;
-      margin: 10px;
       cursor: pointer;
     }
-    .btn.red {
+    .btn-red {
       background-color: #e84118;
-    }
-    input {
-      padding: 10px;
-      font-size: 16px;
-      width: 200px;
-      text-align: center;
-    }
-    .status {
-      margin-top: 15px;
-      font-size: 1em;
-      color: #fbc531;
+      color: white;
+      border: none;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <h1>💥 Crash Game</h1>
-  <div>💰 Balance: $<span id="balance">1000.00</span></div>
-  <div class="multiplier" id="multiplier">Multiplier: x1.00</div>
-  <input type="number" id="betAmount" placeholder="Enter Bet Amount" />
-  <div>
-    <button class="btn" onclick="startRound()">▶ Start Round</button>
-    <button class="btn red" id="cashOutBtn" onclick="cashOut()" disabled>💸 Cash Out</button>
-  </div>
-  <div class="status" id="status"></div>
+  <h3>💰 Balance: <span id="balanceDisplay">$0.00</span></h3>
+  <p>Multiplier: <span id="multiplier">x1.00</span></p>
+
+  <input type="number" id="bet" placeholder="Enter Bet Amount" />
+  <br>
+  <button class="btn-green" onclick="startRound()">▶ Start Round</button>
+  <button class="btn-red" onclick="cashOut()" disabled id="cashoutBtn">💸 Cash Out</button>
+
+  <p id="status"></p>
 
   <script>
-    let balance = 1000;
+    // Shared balance via localStorage
+    let balance;
+    if (localStorage.getItem("balance") === null) {
+      localStorage.setItem("balance", "1000");
+    }
+    balance = parseFloat(localStorage.getItem("balance"));
+
+    function updateBalanceDisplay() {
+      document.getElementById("balanceDisplay").innerText = `$${balance.toFixed(2)}`;
+    }
+
+    function updateBalance(amount) {
+      balance += amount;
+      localStorage.setItem("balance", balance.toString());
+      updateBalanceDisplay();
+    }
+
+    // Crash Game Logic
     let betAmount = 0;
     let currentMultiplier = 1.0;
+    let isRunning = false;
     let crashPoint = 0;
-    let gameRunning = false;
+    let multiplierInterval;
     let hasCashedOut = false;
-    let interval;
-
-    const balanceSpan = document.getElementById("balance");
-    const multiplierDiv = document.getElementById("multiplier");
-    const statusDiv = document.getElementById("status");
-    const cashOutBtn = document.getElementById("cashOutBtn");
 
     function startRound() {
-      if (gameRunning) return;
+      if (isRunning) return;
 
-      betAmount = parseFloat(document.getElementById("betAmount").value);
-      if (isNaN(betAmount) || betAmount <= 0 || betAmount > balance) {
-        statusDiv.textContent = "Invalid bet amount.";
+      betAmount = parseFloat(document.getElementById("bet").value);
+      if (isNaN(betAmount) || betAmount <= 0) {
+        document.getElementById("status").innerText = "⚠️ Enter a valid bet amount!";
+        return;
+      }
+      if (betAmount > balance) {
+        document.getElementById("status").innerText = "❌ Not enough money!";
         return;
       }
 
-      balance -= betAmount;
-      updateBalance();
+      updateBalance(-betAmount);
 
-      crashPoint = +(Math.random() * 8 + 1.5).toFixed(2);
       currentMultiplier = 1.0;
+      crashPoint = Math.random() * 8 + 1.5; // crash between 1.5x and 9.5x
+      isRunning = true;
       hasCashedOut = false;
-      gameRunning = true;
+      document.getElementById("cashoutBtn").disabled = false;
+      document.getElementById("status").innerText = "🚀 Game started!";
+      document.getElementById("multiplier").innerText = `x${currentMultiplier.toFixed(2)}`;
 
-      cashOutBtn.disabled = false;
-      statusDiv.textContent = "🚀 Game started!";
-      runMultiplier();
-    }
+      multiplierInterval = setInterval(() => {
+        currentMultiplier *= 1.05;
+        document.getElementById("multiplier").innerText = `x${currentMultiplier.toFixed(2)}`;
 
-    function runMultiplier() {
-      let growthRate = 1.002;
-      let delay = 150;
-
-      interval = setInterval(() => {
         if (currentMultiplier >= crashPoint) {
-          clearInterval(interval);
-          if (!hasCashedOut) {
-            gameOver(true);
-          }
-          return;
+          endGame(true);
         }
-
-        currentMultiplier *= growthRate;
-        multiplierDiv.textContent = `Multiplier: x${currentMultiplier.toFixed(2)}`;
-
-        if (delay > 30) delay -= 1;
-        if (growthRate < 1.05) growthRate += 0.0005;
-      }, delay);
+      }, 100);
     }
 
     function cashOut() {
-      if (!gameRunning || hasCashedOut) return;
-
+      if (!isRunning || hasCashedOut) return;
       hasCashedOut = true;
-      clearInterval(interval);
       let winnings = betAmount * currentMultiplier;
-      balance += winnings;
-      updateBalance();
-      gameOver(false, winnings);
+      updateBalance(winnings);
+      endGame(false, winnings);
     }
 
-    function gameOver(crashed, winnings = 0) {
-      gameRunning = false;
-      cashOutBtn.disabled = true;
-      multiplierDiv.textContent = `Multiplier: x${crashPoint.toFixed(2)} ${crashed ? "(Crashed 💥)" : ""}`;
-      statusDiv.textContent = crashed
-        ? `💥 Crashed at x${crashPoint.toFixed(2)}! You lost your bet.`
-        : `✅ Cashed out at x${currentMultiplier.toFixed(2)}. Won $${winnings.toFixed(2)}!`;
+    function endGame(crashed, winnings = 0) {
+      clearInterval(multiplierInterval);
+      isRunning = false;
+      document.getElementById("cashoutBtn").disabled = true;
+
+      if (crashed && !hasCashedOut) {
+        document.getElementById("status").innerText = `💥 Crashed at x${crashPoint.toFixed(2)} — you lost!`;
+      } else {
+        document.getElementById("status").innerText = `✅ Cashed out at x${currentMultiplier.toFixed(2)} — won $${winnings.toFixed(2)}!`;
+      }
     }
 
-    function updateBalance() {
-      balanceSpan.textContent = balance.toFixed(2);
-    }
+    window.onload = updateBalanceDisplay;
   </script>
 </body>
 </html>
