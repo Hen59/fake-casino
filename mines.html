@@ -42,15 +42,21 @@
       cursor: pointer;
       padding: 10px;
     }
+    .input-container {
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
   <h1>💣 Mines Game</h1>
   <h3>💰 Balance: <span id="balanceDisplay">$0.00</span></h3>
-  <h4>Pick a bet amount, and click to uncover tiles. Avoid the bombs!</h4>
-  <input type="number" id="bet" placeholder="Enter Bet Amount" />
-  <br>
-  <button class="btn-green" onclick="startGame()">▶ Start Game</button>
+  <h4>Select how many mines you'd like on the board (1 to 5 mines). The more mines, the higher the multiplier.</h4>
+
+  <!-- Input for number of mines -->
+  <div class="input-container">
+    <input type="number" id="minesInput" min="1" max="5" value="3" />
+    <button class="btn-green" onclick="startGame()">▶ Start Game</button>
+  </div>
 
   <p id="status"></p>
   <div class="grid" id="grid"></div>
@@ -81,9 +87,11 @@
     let gameOver = false;
     let multiplier = 1;
     let safeCells = [];
+    let numberOfMines = 3; // Default 3 mines
 
     function startGame() {
       if (gameOver) return;
+      
       betAmount = parseFloat(document.getElementById("bet").value);
       if (isNaN(betAmount) || betAmount <= 0) {
         document.getElementById("status").innerText = "⚠️ Enter a valid bet amount!";
@@ -94,11 +102,18 @@
         return;
       }
 
+      // Get the number of mines selected
+      numberOfMines = parseInt(document.getElementById("minesInput").value);
+      if (numberOfMines < 1 || numberOfMines > 5) {
+        document.getElementById("status").innerText = "⚠️ Choose between 1 and 5 mines!";
+        return;
+      }
+
       updateBalance(-betAmount);
       mines = generateMines();
       revealedCells = [];
       safeCells = [];
-      multiplier = 1;
+      multiplier = 1 + (numberOfMines * 0.1);  // Start multiplier based on mines
       gameOver = false;
       document.getElementById("status").innerText = "🚀 Game started! Avoid the bombs!";
       generateGrid();
@@ -106,7 +121,7 @@
 
     function generateMines() {
       let minesArray = [];
-      while (minesArray.length < 3) { // 3 mines for this example
+      while (minesArray.length < numberOfMines) { // Use the selected number of mines
         let randomCell = Math.floor(Math.random() * (gridSize * gridSize));
         if (!minesArray.includes(randomCell)) {
           minesArray.push(randomCell);
@@ -131,16 +146,16 @@
 
       if (mines.includes(cellIndex)) {
         cell.classList.add("mine");
-        document.getElementById("status").innerText = "💥 BOOM! You hit a bomb! Game Over!";
+        document.getElementById("status").innerText = `💥 BOOM! You hit a bomb! Game Over!`;
         gameOver = true;
-        updateBalance(-betAmount);
+        updateBalance(-betAmount); // Lose bet
       } else {
         cell.classList.add("revealed", "safe");
         safeCells.push(cellIndex);
         multiplier += 0.1;  // Increase multiplier with each safe click (10% per safe cell)
         document.getElementById("status").innerText = `🚀 Multiplier: x${multiplier.toFixed(2)}! Keep going!`;
 
-        if (revealedCells.length === (gridSize * gridSize - mines.length)) { // No more mines
+        if (revealedCells.length === (gridSize * gridSize - numberOfMines)) { // No more mines
           document.getElementById("status").innerText = `🎉 You cleared the grid! You win! Your multiplier is x${multiplier.toFixed(2)}`;
           updateBalance(betAmount * multiplier); // Apply multiplier to the bet
         }
